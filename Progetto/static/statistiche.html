@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistica dei Driver</title>
+    <style>
+        /* Aggiungi qui il tuo stile personalizzato per la tabella */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Statistiche di Consegna</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Driver</th>
+                <th>Tempo medio di consegna</th>
+                <th>Valutazione</th>
+                <th>Ordini effettuati</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row[0] }}</td> <!-- Driver -->
+                <td>{{ row[1] }}</td> <!-- Tempo medio di consegna -->
+                <td>{{ row[2] }}</td> <!-- Valutazione -->
+                <td>{{ row[3] }}</td> <!-- Ordini effettuati -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

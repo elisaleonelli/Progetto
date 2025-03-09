@@ -1,0 +1,199 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Delivery Elisa - Dati</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+
+        <style>
+            header h2 {
+                margin-bottom: 10px;
+            }
+
+            section#main p {
+                margin-top: 5px;
+            }
+
+            #map {
+                margin-top: 20px;
+            }
+
+            /* Stile per la tabella */
+            #table_div {
+                margin-top: 20px;
+                overflow-x: auto;
+            }
+
+            /* Tooltip stilizzati per una disposizione orizzontale */
+            .google-visualization-tooltip {
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 8px;
+                border-radius: 5px;
+                box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+                font-size: 14px;
+                font-weight: bold;
+                white-space: nowrap; /* Prevenire il ritorno a capo */
+                display: flex;
+                align-items: center; /* Centrato orizzontalmente */
+                justify-content: flex-start; /* Allineamento orizzontale */
+                max-width: 600px; /* Impostare una larghezza massima */
+                flex-wrap: wrap; /* Permettere al contenuto di andare a capo se necessario */
+            }
+
+            .google-visualization-tooltip span {
+                margin-right: 10px; /* Distanza tra le etichette */
+                padding: 5px;
+                background-color: rgba(255, 255, 255, 0.3);
+                border-radius: 5px;
+            }
+
+            /* Aumentare lo spazio tra le colonne nei grafici */
+            .google-visualization-columnchart .google-visualization-columnchart-bar {
+                margin-left: 15px;
+                margin-right: 15px;
+            }
+        </style>
+    </head>
+
+    <body class="is-preload">
+        <div id="page-wrapper">
+            <header id="header">
+                <h1>Delivery Elisa</h1>
+                <nav id="nav">
+                    <ul>
+                        <li><a href="home.html">Home</a></li>
+                    </ul>
+                </nav>
+            </header>
+
+            <section id="main" class="container">
+                <header>
+                    <h2>Delivery Insight</h2>
+                    <p>Tutte le nostre statistiche a portata di click</p>
+                </header>
+
+                <!-- Tabella -->
+                <div id="table_div"></div>
+
+                <!-- Contenitore per i tre istogrammi -->
+                <div id="charts_container" style="display: block; margin-top: 20px;">
+                    <div id="deliveries_chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+                    <div id="rating_chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+                    <div id="time_chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+                </div>
+            </section>
+
+            <footer id="footer">
+                <form method="post" action="/logout">
+                    <button type="submit" class="button">Logout</button>
+                </form>
+
+                </br>
+                </br>
+                </br>
+                <ul class="icons">
+                    <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+                    <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+                    <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+                    <li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
+                    <li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
+                    <li><a href="#" class="icon brands fa-google-plus"><span class="label">Google+</span></a></li>
+                </ul>
+            </footer>
+        </div>
+
+        <!-- Scripts -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://www.gstatic.com/charts/loader.js"></script>
+		
+		
+        <script>
+            google.charts.load('current', { packages: ['table', 'corechart'] });
+            google.charts.setOnLoadCallback(drawCharts);
+
+            function drawCharts() {
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Driver');
+                data.addColumn('number', 'Tempo medio di consegna');
+                data.addColumn('number', 'Valutazione');
+                data.addColumn('number', 'Ordini effettuati');
+
+                var chartData = [
+                    {% for driver in chart_data %}
+                        ['{{ driver[0] }}', {{ driver[1] }}, {{ driver[2] }}, {{ driver[3] }}],
+                    {% endfor %}
+                ];
+
+                // Tutti i driver nella tabella
+                chartData.forEach(driver => data.addRow(driver));
+
+                var table = new google.visualization.Table(document.getElementById('table_div'));
+                table.draw(data, { showRowNumber: false, width: '100%', height: '250px' });
+
+                var options = {
+                    titleTextStyle: { fontSize: 30, bold: true, alignment: 'center' },
+                    legend: { position: 'none' },
+                    annotations: { alwaysOutside: true, textStyle: { fontSize: 12, bold: true } },
+                    hAxis: { textStyle: { fontSize: 12 } },
+                    vAxis: { textStyle: { fontSize: 12 } },
+                    height: 400,
+                    tooltip: { isHtml: true }, // Attivare tooltip HTML per maggiore interattività
+                };
+
+                // Istogramma: Numero di consegne per driver
+                var deliveriesData = new google.visualization.DataTable();
+                deliveriesData.addColumn('string', 'Driver');
+                deliveriesData.addColumn('number', 'Ordini effettuati');
+                chartData.forEach(driver => deliveriesData.addRow([driver[0], driver[3]]));
+
+                var deliveriesChart = new google.visualization.ColumnChart(document.getElementById('deliveries_chart'));
+                deliveriesChart.draw(deliveriesData, { 
+                    ...options, 
+                    title: 'Numero di consegne per driver',
+                    colors: ['#4CAF50'], // Colore personalizzato
+                    annotations: { 
+                        alwaysOutside: true, 
+                        textStyle: { fontSize: 12, bold: true, color: '#4CAF50' }
+                    }
+                });
+
+                // Istogramma: Media rating per driver
+                var ratingData = new google.visualization.DataTable();
+                ratingData.addColumn('string', 'Driver');
+                ratingData.addColumn('number', 'Valutazione Media');
+                chartData.forEach(driver => ratingData.addRow([driver[0], driver[2]]));
+
+                var ratingChart = new google.visualization.ColumnChart(document.getElementById('rating_chart'));
+                ratingChart.draw(ratingData, { 
+                    ...options, 
+                    title: 'Media rating per driver',
+                    colors: ['#FF9800'], // Colore personalizzato
+                    annotations: { 
+                        alwaysOutside: true, 
+                        textStyle: { fontSize: 12, bold: true, color: '#FF9800' }
+                    }
+                });
+
+                // Istogramma: Tempo medio di consegna per driver
+                var timeData = new google.visualization.DataTable();
+                timeData.addColumn('string', 'Driver');
+                timeData.addColumn('number', 'Tempo Medio di Consegna');
+                chartData.forEach(driver => timeData.addRow([driver[0], driver[1]]));
+
+                var timeChart = new google.visualization.ColumnChart(document.getElementById('time_chart'));
+                timeChart.draw(timeData, { 
+                    ...options, 
+                    title: 'Tempo medio di consegna per driver',
+                    colors: ['#2196F3'], // Colore personalizzato
+                    annotations: { 
+                        alwaysOutside: true, 
+                        textStyle: { fontSize: 12, bold: true, color: '#2196F3' }
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>

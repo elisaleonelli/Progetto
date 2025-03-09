@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Delivery Elisa - Maps</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="/static/assets/css/main.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  </head>
+  <body class="is-preload">
+    <div id="page-wrapper">
+      <header id="header">
+        <h1>Delivery Elisa</h1>
+        <nav id="nav">
+          <ul>
+            <li><a href="home.html">Home</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <section id="main" class="container">
+        <header>
+          <h2>Le nostre consegne</h2>
+          <p>Guarda le nostre ultime consegne</p>
+        </header>
+
+        <!-- Aggiungi il filtro tra il sottotitolo e la mappa -->
+        <div class="filter" style="margin-bottom: 20px;">
+          <label for="riderFilter" style="font-size: 30px;">Vuoi sapere quali consegne ha effettuato un determinato driver?</label>
+          <select id="riderFilter" onchange="filterDeliveries()">
+            <option value="">Seleziona un Delivery ID</option>
+            <!-- Le opzioni saranno aggiunte dinamicamente tramite JavaScript -->
+          </select>
+        </div>
+
+        <div class="box">
+          <!-- Aggiungi l'elemento div per la mappa -->
+          <div id="mapid" style="width: 100%; height: 500px;"></div>
+        </div>
+      </section>
+
+      <footer id="footer">
+        <form method="post" action="/logout">
+          <button type="submit" class="button">Logout</button>
+        </form>
+        </br>
+        </br>
+        </br>
+        <ul class="icons">
+          <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+          <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+          <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+          <li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
+          <li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
+          <li><a href="#" class="icon brands fa-google-plus"><span class="label">Google+</span></a></li>
+        </ul>
+      </footer>
+    </div>
+
+    <script>
+      let allSegments = []; // Salva tutti i segmenti di consegna
+      let map; // Riferimento alla mappa per poterla aggiornare
+
+      function d7(x) {
+        return x / 10000000;
+      }
+
+      // Funzione per popolare il filtro con i Delivery_ID unici
+      function populateRiderFilter() {
+        const riderFilter = document.getElementById("riderFilter");
+        const deliveryIDs = [...new Set(allSegments.map(delivery => delivery.Delivery_ID))]; // Estrai i Delivery_ID unici
+
+        // Aggiungi ogni Delivery_ID come opzione
+        deliveryIDs.forEach(id => {
+          const option = document.createElement("option");
+          option.value = id;
+          option.textContent = id;
+          riderFilter.appendChild(option);
+        });
+      }
+
+      function filterDeliveries() {
+        const riderID = document.getElementById("riderFilter").value; // Ottieni l'ID del rider dalla casella di selezione
+        const filteredSegments = riderID
+          ? allSegments.filter(delivery => delivery.Delivery_ID === riderID) // Filtra per Delivery_ID
+          : allSegments; // Se non è selezionato un ID, mostra tutte le consegne
+
+        // Ricostruisci la mappa con i dati filtrati
+        updateMap(filteredSegments);
+      }
+
+      function updateMap(segments) {
+        // Resetta la mappa e rimuovi i marker o linee precedenti
+        map.eachLayer(function (layer) {
+          if (layer instanceof L.Polyline) {
+            map.removeLayer(layer);
+          }
+        });
+
+        // Aggiungi di nuovo le linee sulla mappa
+        const colors = ['red', 'blue', 'yellow', 'green', 'black'];
+        let i = 0;
+
+        segments.forEach(delivery => {
+          const path = [
+            [parseFloat(delivery.Restaurant_location[0]), parseFloat(delivery.Restaurant_location[1])],
+            [parseFloat(delivery.Delivery_location[0]), parseFloat(delivery.Delivery_location[1])]
+          ];
+
+          const color = colors[i % colors.length];
+          const polyline = new L.Polyline(path, { color: color, weight: 3, opacity: 0.5, smoothFactor: 1 }).addTo(map);
+          i++;
+        });
+      }
+
+      function initMap() {
+        // Carica i dati da un URL (modifica con il tuo URL API)
+        const url = "/raw_data";
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            // Salva tutti i segmenti di consegna per l'uso successivo
+            allSegments = data;
+
+            // Popola il filtro con i Delivery_ID unici
+            populateRiderFilter();
+
+            // Inizializza la mappa centrata sulla prima posizione
+            const lat_center = parseFloat(data[0].Restaurant_location[0]);
+            const lon_center = parseFloat(data[0].Restaurant_location[1]);
+            map = L.map('mapid').setView([lat_center, lon_center], 13);
+
+            // Aggiungi il layer OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // Mostra tutte le consegne inizialmente
+            updateMap(data);
+          })
+          .catch(error => {
+            console.error('Errore nel caricamento dei dati:', error);
+          });
+      }
+
+      // Esegui la funzione quando la pagina è completamente caricata
+      window.onload = function () {
+        initMap();
+      };
+    </script>
+  </body>
+</html>

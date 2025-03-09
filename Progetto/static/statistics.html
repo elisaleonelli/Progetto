@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Delivery Elisa - Dati</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"/>
+	</head>
+	<body class="is-preload">
+		<div id="page-wrapper">
+			<header id="header">
+				<h1>Delivery Elisa</h1>
+				<nav id="nav">
+					<ul>
+						<li><a href="home.html">Home</a></li>
+					</ul>
+				</nav>
+			</header>
+
+			<section id="main" class="container">
+				<header>
+					<h2>Delivery Insight</h2>
+					<p>Tutte le nostre statistiche a portata di click</p>
+				</header>
+				<div class="box">
+					<span class="image featured"><img src="images/pic01.jpg" alt="Statistiche delle consegne" /></span>
+				</div>
+
+				<!-- Mappa -->
+				<div id="map" style="height: 400px;"></div>
+
+				<!-- Tabella -->
+				<div id="table_div"></div>
+			</section>
+
+			<footer id="footer">
+				<ul class="icons">
+					<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+					<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+					<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+					<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
+				</ul>
+			</footer>
+		</div>
+
+		<!-- Scripts -->
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		<script src="assets/js/jquery.dropotron.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		<script>
+			$(document).ready(function () {
+				$.get("/statistics")
+					.done(function (response) {
+						try {
+							let datav = JSON.parse(response);
+							google.charts.load('current', { packages: ['table'] });
+							google.charts.setOnLoadCallback(() => drawTable(datav));
+						} catch (error) {
+							console.error("Errore nel parsing dei dati:", error);
+						}
+					})
+					.fail(function () {
+						console.error("Errore nel recupero dei dati.");
+					});
+			});
+
+			function drawTable(datav) {
+				var data = new google.visualization.DataTable();
+				data.addColumn('string', 'Driver');
+				data.addColumn('number', 'Tempo medio di consegna');
+				data.addColumn('number', 'Valutazione');
+				data.addColumn('number', 'Ordini effettuati');
+				data.addRows(datav);
+
+				var table = new google.visualization.Table(document.getElementById('table_div'));
+				table.draw(data, { showRowNumber: false, width: '100%', height: '100%' });
+			}
+		</script>
+	</body>
+</html>
